@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Stamp Rally</title>
+    <style>
+        :root {
+            --primary-color: #ff9800;
+            --bg-color: #fff9f0;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #5d4037; margin-bottom: 10px; }
+        .status-text { margin-bottom: 20px; color: #795548; font-weight: bold; }
+
+        /* スタンプを並べるグリッド */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .slot {
+            aspect-ratio: 1 / 1;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        /* 操作ボタン */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .add-btn { background-color: var(--primary-color); color: white; }
+        .reset-btn { background-color: #eee; color: #666; font-size: 12px; }
+
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>Stamp Rally</h1>
+    <div class="status-text" id="counter">0 / 14</div>
+
+    <div class="grid" id="board"></div>
+
+    <div class="controls">
+        <input type="file" id="picker" accept="image/*">
+        <button class="btn add-btn" onclick="document.getElementById('picker').click()">スタンプを追加する</button>
+        <button class="btn reset-btn" onclick="reset()">データをすべて消去</button>
+    </div>
+
+    <script>
+        const MAX = 14;
+        let stamps = JSON.parse(localStorage.getItem('stamps_data')) || [];
+
+        function update() {
+            const board = document.getElementById('board');
+            const counter = document.getElementById('counter');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < MAX; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                if (stamps[i]) {
+                    const img = document.createElement('img');
+                    img.src = stamps[i];
+                    slot.appendChild(img);
+                    slot.style.border = '2px solid #ffcc00';
+                }
+                board.appendChild(slot);
+            }
+            counter.innerText = `${stamps.length} / ${MAX}`;
+            localStorage.setItem('stamps_data', JSON.stringify(stamps));
+        }
+
+        document.getElementById('picker').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (stamps.length >= MAX) {
+                alert("スタンプがいっぱいです！");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                stamps.push(event.target.result);
+                update();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function reset() {
+            if (confirm("集めたスタンプをすべてリセットしますか？")) {
+                stamps = [];
+                update();
+            }
+        }
+
+        update();
+    </script>
+</body>
+</html>
